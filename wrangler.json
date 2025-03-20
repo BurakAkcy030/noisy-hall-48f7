@@ -1,14 +1,107 @@
-{
-  "name": "noisy-hall-48f7",
-  "compatibility_date": "2024-11-01",
-  "compatibility_flags": ["nodejs_compat"],
-  "main": "./dist/_worker.js/index.js",
-  "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS"
-  },
-  "observability": {
-    "enabled": true
-  },
-  "upload_source_maps": true
-}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Toplist Ranking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        #container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 20px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Toplist Ranking</h1>
+    <div id="container">
+        <textarea id="items" rows="10" placeholder="Gib deine Filme/Spiele ein, einen pro Zeile"></textarea><br>
+        <button onclick="startRanking()">Start</button>
+        <div id="battle" style="display:none;">
+            <h2 id="round"></h2>
+            <button id="optionA" onclick="choose(0)"></button>
+            <button id="optionB" onclick="choose(1)"></button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let items = [];
+        let results = [];
+        let currentPair = [0, 1];
+        let battles = [];
+
+        function startRanking() {
+            const input = document.getElementById("items").value.trim();
+            if (!input) {
+                alert("Bitte gib mindestens zwei Einträge ein.");
+                return;
+            }
+            items = input.split("\n").map(i => i.trim()).filter(i => i);
+            if (items.length < 2) {
+                alert("Mindestens zwei Einträge erforderlich.");
+                return;
+            }
+            results = Array(items.length).fill(0);
+            battles = [];
+            for (let i = 0; i < items.length; i++) {
+                for (let j = i + 1; j < items.length; j++) {
+                    battles.push([i, j]);
+                }
+            }
+            shuffle(battles);
+            showBattle();
+        }
+
+        function showBattle() {
+            if (battles.length === 0) {
+                showResults();
+                return;
+            }
+            currentPair = battles.pop();
+            document.getElementById("round").innerText = `${items[currentPair[0]]} vs ${items[currentPair[1]]}`;
+            document.getElementById("optionA").innerText = items[currentPair[0]];
+            document.getElementById("optionB").innerText = items[currentPair[1]];
+            document.getElementById("battle").style.display = "block";
+        }
+
+        function choose(winner) {
+            results[currentPair[winner]] += 1;
+            showBattle();
+        }
+
+        function showResults() {
+            const ranked = items.map((item, i) => ({ item, score: results[i] }))
+                                .sort((a, b) => b.score - a.score);
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = "<h2>Topliste:</h2>";
+            ranked.forEach((entry, i) => {
+                resultDiv.innerHTML += `${i + 1}. ${entry.item} (Siege: ${entry.score})<br>`;
+            });
+            document.getElementById("battle").style.display = "none";
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+    </script>
+</body>
+</html>
